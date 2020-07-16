@@ -6,19 +6,26 @@
 #include "Common/Vec.h"
 #include <time.h>
 
+//========================================================
+// グローバル変数
+//========================================================
 Vec2 g_Position = Vec2(0.0f, 0.0f);
 Vec2 g_Scale = Vec2(1.0f, 1.0f);
 float g_Angle = 0.0f;
 int g_playerHand = -1;
 int g_enemyHand;
+int result = 0;
 int next = -1;
-// DWORD g_StartTime = 0;        // ゲームを起動したときの時間を持つ変数
-// DWORD g_ElapsedTime = 0;    // ゲームを起動してからの経過時間を持つ変数
 
-// ゲーム処理
-void GameProcessing();
-// 描画処理
-void DrawProcessing();
+//========================================================
+// プロトタイプ宣言
+//========================================================
+void GameProcessing();		// ゲーム処理
+void DrawProcessing();		// 描画処理
+void PlayerHand();			// プレイヤーの手処理
+void EnemyHand();			// 相手の手処理
+void ResultScreen();		// 結果処理
+void InputByKeyboard();		// キーボード入力処理
 
 
 int WINAPI WinMain(
@@ -40,7 +47,6 @@ int WINAPI WinMain(
 	Engine::LoadTexture("rook", "Res/gu.png");
 	Engine::LoadTexture("scisers", "Res/choki.png");
 	Engine::LoadTexture("paper", "Res/pa.png");
-	// g_StartTime = timeGetTime();    // timeGetTimeは現在時刻を表す関数
 
 	while (true)
 	{
@@ -88,23 +94,9 @@ void GameProcessing()
 	//========================================================
 	// キーボードの入力取得
 	//========================================================
-	if (g_playerHand == -1)
+	if (next == -1)
 	{
-		if (Engine::IsKeyboardKeyPushed(DIK_0) == true)
-		{
-			g_playerHand = 0;
-		}
-
-		else if (Engine::IsKeyboardKeyPushed(DIK_1) == true)
-		{
-			g_playerHand = 1;
-		}
-
-		else if (Engine::IsKeyboardKeyPushed(DIK_2) == true)
-		{
-			g_playerHand = 2;
-		}
-		next = 0;
+		InputByKeyboard();
 	}
 	else if (next == 0)
 	{
@@ -115,29 +107,15 @@ void GameProcessing()
 	}
 	else if (next == 1)
 	{
+		
 		if (Engine::IsKeyboardKeyPushed(DIK_SPACE) == true)
 		{
 			g_playerHand = -1;
 			next = -1;
-
 			srand((unsigned)time(NULL));
 			g_enemyHand = rand() % 3;
 		}
 	}
-	//if (Engine::IsKeyboardKeyPushed(DIK_SPACE) == true)
-	//{
-	//	// キーが押された瞬間の処理
-	//}
-
-	//if (Engine::IsKeyboardKeyHeld(DIK_LEFT) == true)
-	//{
-	//	// キーが押されている間の処理
-	//}
-
-	//if (Engine::IsKeyboardKeyReleased(DIK_A))
-	//{
-	//	// キーが離された瞬間の処理
-	//}
 }
 
 void DrawProcessing()
@@ -146,68 +124,109 @@ void DrawProcessing()
 	// 描画処理を実行する場合、必ず最初実行する
 	Engine::StartDrawing(0);
 
-
-	// テクスチャ描画	
+	// テクスチャ描画		
 	
-	
-	if (g_playerHand == -1)
+	if (next == -1)
 	{
 		Engine::DrawFont(180.0f, 130.0f, "ジャンケンゲーム", FontSize::Large, FontColor::White);
 		Engine::DrawFont(140.0f, 270.0f, "グー(0)かチョキ(1)かパー(2)\n\n    を入力してください", FontSize::Regular, FontColor::White);
 	}
-	else if(next != 1)
+	else if(next == 0)
 	{
 		// 自分の手の表示
-		Engine::DrawFont(160.0f, 100.0f, "自分の手", FontSize::Large, FontColor::White);
-		if (g_playerHand == 0)
-		{
-			Engine::DrawTexture(90, 130, "rook", 255, 0.0f, 0.6f, 0.6f);
-		}
-		else if (g_playerHand == 1)
-		{
-			Engine::DrawTexture(-35, 0, "scisers", 255, 0.0f, 0.5f, 0.4f);
-		}
-		else if (g_playerHand == 2)
-		{
-			Engine::DrawTexture(-20, 0, "paper", 255, 0.0f, 0.4f, 0.4f);
-		}
+		PlayerHand();
 
 		// 相手の手の表示
-		Engine::DrawFont(400.0f, 100.0f, "相手の手", FontSize::Large, FontColor::White);
-		if (g_enemyHand == 0)
-		{
-			Engine::DrawTexture(330, 130, "rook", 255, 0.0f, 0.6f, 0.6f);
-		}
-		else if (g_enemyHand == 1)
-		{
-			Engine::DrawTexture(205, 0, "scisers", 255, 0.0f, 0.5f, 0.4f);
-		}
-		else if (g_enemyHand == 2)
-		{
-			Engine::DrawTexture(220, 0, "paper", 255, 0.0f, 0.4f, 0.4f);
-		}
+		EnemyHand();
 
 		Engine::DrawFont(200.0f, 380.0f, "スペースで次へ", FontSize::Large, FontColor::White);
 	}
 	else if (next == 1)
 	{
-		if (g_playerHand == g_enemyHand)
-		{
-			Engine::DrawFont(270.0f, 200.0f, "あいこ!", FontSize::Large, FontColor::White);
-		}
-		else if (g_playerHand == 0 && g_enemyHand == 1 || g_playerHand == 1 && g_enemyHand == 2 || g_playerHand == 2 && g_enemyHand == 0)
-		{
-			Engine::DrawFont(200.0f, 200.0f, "プレイヤーの勝ち!", FontSize::Large, FontColor::White);
-		}
-		else if (g_playerHand == 0 && g_enemyHand == 2 || g_playerHand == 1 && g_enemyHand == 0 || g_playerHand == 2 && g_enemyHand == 1)
-		{
-			Engine::DrawFont(230.0f, 200.0f, "相手の勝ち!", FontSize::Large, FontColor::White);
-		}
-		Engine::DrawFont(140.0f, 270.0f, "スペースでもう一回できるよ！", FontSize::Regular, FontColor::White);
+		ResultScreen();
+		Engine::DrawFont(150.0f, 270.0f, "スペースでもう一回できるよ！", FontSize::Regular, FontColor::White);
 	}
-	
 	// 描画終了
 	// 描画処理を終了する場合、必ず最後に実行する
 	Engine::FinishDrawing();
+}
+
+void InputByKeyboard()
+{
+	if (Engine::IsKeyboardKeyPushed(DIK_0) == true)
+	{
+		g_playerHand = 0;
+		next = 0;
+	}
+
+	else if (Engine::IsKeyboardKeyPushed(DIK_1) == true)
+	{
+		g_playerHand = 1;
+		next = 0;
+	}
+
+	else if (Engine::IsKeyboardKeyPushed(DIK_2) == true)
+	{
+		g_playerHand = 2;
+		next = 0;
+	}
+
+}
+
+void PlayerHand()
+{
+	Engine::DrawFont(135.0f, 100.0f, "自分の手", FontSize::Large, FontColor::White);
+	switch (g_playerHand)
+	{
+	case 0:		
+		Engine::DrawTexture(70, 130, "rook", 255, 0.0f, 0.6f, 0.6f);
+		break;
+
+	case 1:
+		Engine::DrawTexture(-65, 0, "scisers", 255, 0.0f, 0.5f, 0.4f);
+		break;
+
+	case 2:
+		Engine::DrawTexture(-50, 0, "paper", 255, 0.0f, 0.4f, 0.4f);
+		break;
+	}
+}
+
+void EnemyHand()
+{
+	Engine::DrawFont(400.0f, 100.0f, "相手の手", FontSize::Large, FontColor::White);
+	switch (g_enemyHand)
+	{
+	case 0:
+		Engine::DrawTexture(330, 130, "rook", 255, 0.0f, 0.6f, 0.6f);
+		break;
+
+	case 1:
+		Engine::DrawTexture(205, 0, "scisers", 255, 0.0f, 0.5f, 0.4f);
+		break;
+
+	case 2:
+		Engine::DrawTexture(220, 0, "paper", 255, 0.0f, 0.4f, 0.4f);
+		break;
+	}
+}
+
+void ResultScreen()
+{
+	result = ((3 + g_enemyHand) - g_playerHand) % 3;
+	if (result == 0)
+	{
+		Engine::DrawFont(260.0f, 130.0f, "あいこ!", FontSize::Large, FontColor::White);
+		Engine::DrawFont(180.0f, 190.0f, "次は勝ちましょう！", FontSize::Large, FontColor::White);
+	}
+	else if (result == 1)
+	{
+		Engine::DrawFont(190.0f, 130.0f, "プレイヤーの勝ち!\n\n     すごい！", FontSize::Large, FontColor::White);
+	}
+	else if (result == 2)
+	{
+		Engine::DrawFont(180.0f, 130.0f, "プレイヤーの負け!\n\n次は勝てますように", FontSize::Large, FontColor::White);
+	}
+	
 }
 
